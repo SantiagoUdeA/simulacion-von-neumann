@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Versión Avanzada - Máquina de Von Neumann</title>
+    <link rel="stylesheet" href="../styles.css">
+    <style>
+        /* Reset y estilos base */
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            max-height: 100vh;
+            color: white;
+        }
+        
+        /* Contenedor principal */
+        .main-container {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            grid-template-rows: 1fr auto;
+            gap: 20px;
+            height: fit-content;
+            max-width: 1400px;
+            height: 100vh;
+            margin: 0 auto;
+        }
+        
+        /* Panel izquierdo (input del usuario) */
+        .user-panel {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 20px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        /* Área de la máquina */
+        .machine-area {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 20px;
+            overflow: hidden;
+            max-height: 100%;
+        }
+        
+        /* Componentes de la máquina */
+        .machine-component {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: auto;
+            max-height: 100%;
+        }
+        
+        .memoria {
+            grid-column: 1 / 3;
+            grid-row: 2;
+        }
+        
+        .cpu {
+            grid-column: 1;
+            grid-row: 1;
+        }
+        
+        .alu {
+            grid-column: 2;
+            grid-row: 1;
+        }
+        
+        /* Barra de controles */
+        .controls-bar {
+            grid-column: 1;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 15px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap; /* permitir que salten de línea si no caben */
+        }
+        
+        /* Títulos de componentes */
+        .component-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-align: center;
+            color: #ffffff;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+        
+        /* Estilos para inputs y controles */
+        .user-inputs {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .input-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .input-group label {
+            min-width: 30px;
+            font-weight: 600;
+        }
+        
+        input, textarea {
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 6px;
+            padding: 8px;
+            color: white;
+            transition: all 0.3s ease;
+            font-family: 'Courier New', monospace;
+        }
+        
+        input:not(:disabled):focus, textarea:focus {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(100, 149, 237, 0.8);
+            box-shadow: 0 0 10px rgba(100, 149, 237, 0.5);
+            outline: none;
+        }
+        
+        input:disabled {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .program-textarea {
+            height: 120px;
+            width: 100%;
+            resize: vertical;
+            font-family: 'Courier New', monospace;
+            background: rgba(0, 0, 0, 0.3);
+            color: #00ff00;
+        }
+        
+        /* Descripción del paso actual */
+        .step-description {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin: 15px 0;
+        }
+        
+        .step-description label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #ffffff;
+        }
+        
+        .step-text {
+            background: rgba(0, 0, 0, 0.4);
+            border: 2px solid rgba(100, 149, 237, 0.3);
+            border-radius: 8px;
+            padding: 12px;
+            color: #00ff88;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            min-height: 40px;
+            display: flex;
+            align-items: center;
+        }
+        
+        /* Tabla de memoria */
+        .memory-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+        }
+        
+        .memory-table th, .memory-table td {
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 6px 8px;
+            text-align: center;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+        
+        .memory-table th {
+            background: rgba(255, 255, 255, 0.1);
+            font-weight: bold;
+        }
+        
+        /* Campos de CPU */
+        .cpu-fields {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            width: 100%;
+        }
+        
+        .cpu-field {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .cpu-field label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-align: center;
+        }
+        
+        .cpu-field input {
+            width: 100%;
+            max-width: 120px;
+            text-align: center;
+            font-size: 0.85rem;
+        }
+        
+        /* Campos de ALU */
+        .alu-fields {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+            align-items: center;
+        }
+        
+        .alu-field {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            width: 100%;
+        }
+        
+        .alu-field label {
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        
+        .alu-field input {
+            width: 100%;
+            max-width: 140px;
+            text-align: center;
+            font-size: 0.85rem;
+        }
+        
+        /* Botones */
+        button {
+            background: linear-gradient(135deg, #4834d4, #686de0);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(72, 52, 212, 0.4);
+        }
+        
+        .control-button {
+            padding: 8px 16px;
+            font-size: 0.85rem;
+        }
+        
+        .user-button {
+            width: 100%;
+            margin-top: 10px;
+        }
+        
+        /* Botón volver */
+        .back-button {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            margin-bottom: 1em;
+        }
+        
+        .back-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .main-container {
+                grid-template-columns: 280px 1fr;
+                gap: 15px;
+                padding: 10px;
+            }
+        }
+        
+        @media (max-width: 900px) {
+            .main-container {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto auto;
+                gap: 15px;
+            }
+            
+            .machine-area {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto auto;
+            }
+            
+            .memoria {
+                grid-column: 1;
+                grid-row: 3;
+            }
+            
+            .cpu {
+                grid-column: 1;
+                grid-row: 1;
+            }
+            
+            .alu {
+                grid-column: 1;
+                grid-row: 2;
+            }
+        }
+
+        /* Ajustes progresivos para controles en pantallas más pequeñas */
+        @media (max-width: 700px) {
+            .controls-bar {
+                gap: 10px;
+                padding: 12px;
+            }
+            .controls-bar button {
+                flex: 1 1 22%;
+                min-width: 0;
+                padding: 8px 10px;
+                font-size: 0.8rem;
+            }
+        }
+
+        @media (max-width: 560px) {
+            .controls-bar {
+                gap: 8px;
+                padding: 10px;
+            }
+            .controls-bar button {
+                padding: 6px 8px;
+                font-size: 0.7rem;
+                border-radius: 6px;
+            }
+            .user-panel {
+                padding: 15px;
+            }
+        }
+
+        @media (max-width: 440px) {
+            .controls-bar {
+                gap: 6px;
+                padding: 8px;
+            }
+            .controls-bar button {
+                padding: 5px 6px;
+                font-size: 0.65rem;
+            }
+            .user-inputs .input-group label {
+                font-size: 0.75rem;
+            }
+            .program-textarea {
+                font-size: 0.7rem;
+            }
+        }
+
+        /* Evitar overflow horizontal de la tabla en pantallas muy pequeñas */
+        @media (max-width: 500px) {
+            .memory-table th, .memory-table td { font-size: 0.7rem; padding: 4px; }
+        }
+    </style>
+</head>
+<body>
+    
+    <div class="main-container">
+        <!-- Panel izquierdo del usuario -->
+        <div class="user-panel">
+            <a href="../index.html" class="back-button">← Volver al Inicio</a>
+            
+            <div class="user-inputs">
+                <div class="input-group">
+                    <label for="inputX">X:</label>
+                    <input id="inputX" type="number" value="5">
+                </div>
+                <div class="input-group">
+                    <label for="inputY">Y:</label>
+                    <input id="inputY" type="number" value="11">
+                </div>
+                <div class="input-group">
+                    <label for="inputZ">Z:</label>
+                    <input id="inputZ" type="text" disabled>
+                </div>
+            </div>
+            
+            <div style="margin-top: 20px;">
+                <label style="display: block; margin-bottom: 10px; font-weight: bold;">Programa:</label>
+                <textarea id="programInput" class="program-textarea">LOD X
+ADD Y
+STO Z
+HLT</textarea>
+            </div>
+            <button id="cargarPrograma" class="user-button">Cargar Programa</button>
+            
+            <button id="showInstructions" class="user-button">Mostrar Instrucciones</button>
+
+            <!-- Descripción del paso actual -->
+            <div class="step-description">
+                <label for="stepText">Paso Actual:</label>
+                <div id="stepText" class="step-text">Listo para ejecutar programa...</div>
+            </div>
+
+            <!-- Barra de controles -->
+            <div class="controls-bar">
+                <button id="anterior" class="control-button">←</button>
+                <button id="ejecutar" class="control-button">▶️</button>
+                <button id="siguiente" class="control-button">→</button>
+                <button id="reset" class="control-button">🔄</button>
+            </div>
+        </div>
+
+        <!-- Área de la máquina -->
+        <div class="machine-area">
+            <!-- Memoria -->
+            <div class="machine-component memoria">
+                <div class="component-title">MEMORIA</div>
+                
+                <div style="display: flex; flex-direction: column; gap: 15px; width: 100%;">
+                    <div style="text-align: center;">
+                        <label>R. Direcciones</label>
+                        <input id="regDireccion" type="text" value="0000" disabled>
+
+                        <label style="margin-left: 10px;">R. Datos</label>
+                        <input id="regDatos" type="text" value="00000000"  disabled>
+                    </div>
+
+                    <table class="memory-table">
+                        <thead>
+                            <tr>
+                                <th>Dir</th>
+                                <th>Contenido</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>0000</td>
+                                <td>00000100</td>
+                            </tr>
+                            <tr>
+                                <td>0001</td>
+                                <td>00000101</td>
+                            </tr>
+                            <tr>
+                                <td>0010</td>
+                                <td>00100110</td>
+                            </tr>
+                            <tr>
+                                <td>0011</td>
+                                <td>00110000</td>
+                            </tr>
+                            <tr>
+                                <td>0100</td>
+                                <td>00000101</td>
+                            </tr>
+                            <tr>
+                                <td>0101</td>
+                                <td>00000110</td>
+                            </tr>
+                            <tr>
+                                <td>0110</td>
+                                <td>00000000</td>
+                            </tr>
+                            <tr>
+                                <td>0111</td>
+                                <td>00000000</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div style="text-align: center;">
+                        
+                    </div>
+                </div>
+            </div>
+
+            <!-- CPU (Unidad de Control) -->
+            <div class="machine-component cpu">
+                <div class="component-title">CPU</div>
+                <div class="cpu-fields">
+                    <div class="cpu-field">
+                        <label>Decodificador</label>
+                        <input id="decodificador" type="text" disabled>
+                    </div>
+                    <div class="cpu-field">
+                        <label>Cont. Programa</label>
+                        <input id="pc" type="text" disabled>
+                    </div>
+                    <div class="cpu-field" style="grid-column: 1 / 3;">
+                        <label>R. Instrucciones</label>
+                        <input id="regInstruccion" type="text" disabled style="max-width: 200px;">
+                    </div>
+                </div>
+            </div>
+
+            <!-- ALU (Unidad Aritmético-Lógica) -->
+            <div class="machine-component alu">
+                <div class="component-title">ARITMETICOLOGICA</div>
+                <div class="alu-fields">
+                    <div class="alu-field">
+                        <label>Acumulador</label>
+                        <input id="acumulador" type="text" disabled>
+                    </div>
+                    <div class="alu-field">
+                        <label>R. Entrada</label>
+                        <input id="regEntrada" type="text" disabled>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/version-avanzada.js"></script>
+</body>
+</html>

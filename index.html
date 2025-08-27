@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Máquina de Von Neumann - Simulador Educativo</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Partículas de fondo -->
+    <div class="particles" id="particles"></div>
+    
+    <div class="container">
+        <div class="main-card">
+            <div class="header">
+                <h1 class="title">🖥️ Máquina de Von Neumann</h1>
+                <p class="subtitle">Simulador Educativo Interactivo</p>
+                <p class="description">
+                    Explora la arquitectura fundamental de las computadoras modernas. 
+                    Descubre cómo funciona el modelo de Von Neumann a través de nuestras 
+                    simulaciones interactivas diseñadas para el aprendizaje.
+                </p>
+            </div>
+            
+        <div class="navigation">
+            <a href="pages/simulacion-basica.html" class="nav-button">
+                <span class="icon">⚡</span>
+                Simulación Básica
+            </a>
+            <a href="pages/version-avanzada.html" class="nav-button">
+                <span class="icon">🚀</span>
+                Versión Avanzada
+            </a>
+        </div>            <div class="footer">
+                <p class="footer-text">
+                    Arquitectura de Computadores • UdeA • 2025
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Generar partículas de fondo animadas
+        function createParticles() {
+            const particlesContainer = document.getElementById('particles');
+            const numberOfParticles = 20;
+            
+            for (let i = 0; i < numberOfParticles; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                
+                // Posición aleatoria
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                
+                // Tamaño aleatorio
+                const size = Math.random() * 4 + 2;
+                particle.style.width = size + 'px';
+                particle.style.height = size + 'px';
+                
+                // Duración de animación aleatoria
+                particle.style.animationDuration = (Math.random() * 3 + 3) + 's';
+                particle.style.animationDelay = Math.random() * 2 + 's';
+                
+                particlesContainer.appendChild(particle);
+            }
+        }
+        
+        // Inicializar partículas cuando la página carga
+        window.addEventListener('load', createParticles);
+        
+        // Efecto hover suave para los botones
+        document.querySelectorAll('.nav-button').forEach(button => {
+            button.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-3px) scale(1.02)';
+            });
+            
+            button.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0) scale(1)';
+            });
+        });
+    </script>
+</body>
+</html>
